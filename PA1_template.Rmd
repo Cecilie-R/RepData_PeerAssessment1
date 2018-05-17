@@ -1,8 +1,8 @@
 ---
 title: "Reproducible Research: Peer Assessment 1"
 output: 
-  html_document:
-    keep_md: true
+html_document:
+keep_md: true
 ---
 
 
@@ -11,14 +11,15 @@ Here the data is loaded, making sure that the date column is automatically read 
 ```{r data, echo=T, warning=FALSE}
 library(readr)
 activity <- read_csv("~/GitHub/RepData_PeerAssessment1/activity.zip", 
-    col_types = cols(date = col_date(format = "%Y-%m-%d"), 
-        interval = col_number(), steps = col_number()), 
-    na = "NA")
+                     col_types = cols(date = col_date(format = "%Y-%m-%d"), 
+                                      interval = col_number(), steps = col_number()), 
+                     na = "NA")
 ```
 
 
 ## What is mean total number of steps taken per day?
 ```{r steps, echo=T, warning=FALSE}
+library(ggplot2)
 #Calcualte the total number of steps each day
 SumStepsDay<-aggregate(activity$steps, by=list(Category=activity$date), FUN=sum)
 
@@ -26,7 +27,10 @@ SumStepsDay<-aggregate(activity$steps, by=list(Category=activity$date), FUN=sum)
 SumStepsDay<-na.omit(SumStepsDay)
 
 #create a histogram plot of the total number of steps each day.
-hist(SumStepsDay$x)
+ggplot(data=SumStepsDay, aes(SumStepsDay$x)) + 
+        geom_histogram(bins=20) +
+        xlab("recorded 5-minute intervals") +
+        ylab("frequency")
 
 #calculate the mean and median number of steps each day.
 meanSteps<-mean(SumStepsDay$x)
@@ -40,14 +44,15 @@ ANSWER: The mean number of steps is `r meanSteps` and the median number of steps
 ```{r interval, echo=T, warning=FALSE}
 library(ggplot2)
 library(data.table)
+
 #calculate the mean number of steps taken in each time interval over the recorded days
 MeanIntervalSteps<- aggregate(x=list(MeanSteps=activity$steps), by=list(interval=activity$interval), FUN=mean, na.rm=TRUE)
 
 #Create the time interval plot
 ggplot(data=MeanIntervalSteps, aes(x=interval, y=MeanSteps)) +
-    geom_line() +
-    xlab("recorded 5-minute intervals") +
-    ylab("average number of steps taken") 
+        geom_line() +
+        xlab("recorded 5-minute intervals") +
+        ylab("average number of steps taken") 
 
 #Look up which interval had the most steps over the recorded duration
 maxSteps<-subset(MeanIntervalSteps, MeanSteps==max(MeanIntervalSteps$MeanSteps))
@@ -61,9 +66,42 @@ steps<-maxSteps$MeanSteps
 On average the time interval of `r interval` had the most steps, with an average of `r steps`.
 
 ## Imputing missing values
+In the following we replace the missing step data with averages for the relevant time interval calculated across all measured days. We then analyse the difference between the mean and average step values to evaluate the impact of replacing the missing datapoints.
+
 ```{r missing, echo=T, warning=FALSE}
-subset(activity, is.na(steps))
+
+#count the number of missing rows
+missing<-nrow(subset(activity, is.na(steps)))
+
+#create a new dataset so we don't mess up the original
+df<-activity
+
+#now replace the NA values in the "steps" column with the averages for that time interval
+df$steps <- with(df, ave(steps, interval,
+    FUN = function(x) replace(x, is.na(x), mean(x, na.rm = TRUE))))
+
+#now we calculate the sum of steps per day again for the new dataset
+NewSumStepsDay<-aggregate(df$steps, by=list(Category=df$date), FUN=sum)
+
+#and calcuate the mean and median steps per day again for the corrected data
+meanStepsNew<-mean(NewSumStepsDay$x)
+medianStepsNew<-median(NewSumStepsDay$x)
+
+#Now to plot the data together let's add a new column called "data" to indicate the corrected data and the uncorrected data - and bind these into one dataset
+NewSumStepsDay$data<-"corrected"
+SumStepsDay$data<-"not corrected"
+activityNew<-rbind(NewSumStepsDay, SumStepsDay)
+
+#Now let's make a new historgram
+ggplot(activityNew, aes(x, fill = data)) + 
+        geom_histogram(alpha = 0.5, aes(y = ..density..), position = 'identity', bins=20) +
+        xlab("recorded 5-minute intervals") +
+        ylab("frequency") 
+
 
 
 ```
+
+The figure above shows that there is a slight difference between the data that has been corrected for missing values and the original dataset. The mean for the corrected data was `r meanStepsNew` vs `r meanSteps` for the original data. The median was `r medianStepsNew` for the corrected vs `r medianSteps` for the original data. 
+
 ## Are there differences in activity patterns between weekdays and weekends?
