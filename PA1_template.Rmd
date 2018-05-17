@@ -98,10 +98,37 @@ ggplot(activityNew, aes(x, fill = data)) +
         xlab("recorded 5-minute intervals") +
         ylab("frequency") 
 
-
-
 ```
 
 The figure above shows that there is a slight difference between the data that has been corrected for missing values and the original dataset. The mean for the corrected data was `r meanStepsNew` vs `r meanSteps` for the original data. The median was `r medianStepsNew` for the corrected vs `r medianSteps` for the original data. 
 
 ## Are there differences in activity patterns between weekdays and weekends?
+
+```{r weekdays, echo=T, warning=FALSE}
+library(lattice)
+#first we add a column to the data that specifies the relevant day of the week.
+df$weekday<-weekdays(df$date)
+
+#Now we class Saturday and Sunday as weekend
+df$weekday <- gsub(c("Monday", "Tuesday", "Wednesday", "Thursday", "Friday"),"Weekday",df$weekday)
+df$weekday <- gsub(c("Saturday", "Sunday"),"Weekend",df$weekday)
+
+#Now we must calculate mean number of steps for each interval in weekdays vs weekends
+WeekdaysIntervals<-subset(df, weekday=="Weekday")
+WeekendIntervals<-subset(df, weekday=="Weekend")
+
+#calculate the mean number of steps in each time interval for the weekdays
+MeanIntervalStepsWeekdays<- as.data.frame(aggregate(x=list(MeanSteps=WeekdaysIntervals$steps), by=list(interval=WeekdaysIntervals$interval), FUN=mean, na.rm=TRUE))
+MeanIntervalStepsWeekdays$Weekday<-"Weekday"
+
+#calculate the mean number of steps in each time interval for the weekends
+MeanIntervalStepsWeekend<- as.data.frame(aggregate(x=list(MeanSteps=WeekendIntervals$steps), by=list(interval=WeekendIntervals$interval), FUN=mean, na.rm=TRUE))
+MeanIntervalStepsWeekend$Weekday<-"Weekend"
+
+#Combine the two datasets using rbind
+total<-rbind(MeanIntervalStepsWeekdays,MeanIntervalStepsWeekend)
+
+#use xyplot from the lattice package to plot two panels
+xyplot(MeanSteps ~ interval | Weekday, data = total, type="l")
+
+```
