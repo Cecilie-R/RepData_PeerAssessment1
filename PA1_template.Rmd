@@ -61,7 +61,9 @@ steps<-maxSteps$MeanSteps
 On average the time interval of `r interval` had the most steps, with an average of `r steps`.
 
 ## Imputing missing values
+```{r missing, echo=T, warning=FALSE}
+subset(activity, is.na(steps))
 
 
-
+```
 ## Are there differences in activity patterns between weekdays and weekends?
