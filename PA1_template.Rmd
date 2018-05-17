@@ -8,18 +8,17 @@ output:
 
 ## Loading and preprocessing the data
 Here the data is loaded, making sure that the date column is automatically read by R as dates in the format YYYY-MM-DD. The Steps and Interval columns are classed as numeric values.
-```{r data, echo=T}
+```{r data, echo=T, warning=FALSE}
 library(readr)
 activity <- read_csv("~/GitHub/RepData_PeerAssessment1/activity.zip", 
     col_types = cols(date = col_date(format = "%Y-%m-%d"), 
         interval = col_number(), steps = col_number()), 
     na = "NA")
-View(activity)
 ```
 
 
 ## What is mean total number of steps taken per day?
-```{r steps, echo=T}
+```{r steps, echo=T, warning=FALSE}
 #Calcualte the total number of steps each day
 SumStepsDay<-aggregate(activity$steps, by=list(Category=activity$date), FUN=sum)
 
@@ -38,8 +37,28 @@ medianSteps<-median(SumStepsDay$x)
 ANSWER: The mean number of steps is `r meanSteps` and the median number of steps is `r medianSteps`.
 
 ## What is the average daily activity pattern?
+```{r interval, echo=T, warning=FALSE}
+library(ggplot2)
+library(data.table)
+#calculate the mean number of steps taken in each time interval over the recorded days
+MeanIntervalSteps<- aggregate(x=list(MeanSteps=activity$steps), by=list(interval=activity$interval), FUN=mean, na.rm=TRUE)
+
+#Create the time interval plot
+ggplot(data=MeanIntervalSteps, aes(x=interval, y=MeanSteps)) +
+    geom_line() +
+    xlab("recorded 5-minute intervals") +
+    ylab("average number of steps taken") 
+
+#Look up which interval had the most steps over the recorded duration
+maxSteps<-subset(MeanIntervalSteps, MeanSteps==max(MeanIntervalSteps$MeanSteps))
+
+#Extract the value
+interval<-maxSteps$interval
+steps<-maxSteps$MeanSteps
 
 
+```
+On average the time interval of `r interval` had the most steps, with an average of `r steps`.
 
 ## Imputing missing values
 
