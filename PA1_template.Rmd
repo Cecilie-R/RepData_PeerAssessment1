@@ -1,8 +1,8 @@
 ---
 title: "Reproducible Research: Peer Assessment 1"
 output: 
-html_document:
-keep_md: true
+  html_document:
+    keep_md: true
 ---
 
 
@@ -129,6 +129,7 @@ MeanIntervalStepsWeekend$Weekday<-"Weekend"
 total<-rbind(MeanIntervalStepsWeekdays,MeanIntervalStepsWeekend)
 
 #use xyplot from the lattice package to plot two panels
-xyplot(MeanSteps ~ interval | Weekday, data = total, type="l")
+panelPlot<-xyplot(MeanSteps ~ interval | Weekday, data = total, type="l")
+panelPlot
 
 ```
